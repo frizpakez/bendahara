@@ -1,0 +1,2072 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistem Bendahara Uang Kas Kelas X TKJ ONE - SMK Pasundan. Pencatatan iuran siswa, rekapan otomatis, dan laporan WhatsApp Wali Kelas.">
+    <meta name="theme-color" content="#4f46e5">
+    <title>X TKJ ONE KAS - Bendahara | SMK Pasundan</title>
+    <!-- Favicon SVG Inline agar tampil rapi di tab browser saat dipublikasikan -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%234f46e5'/><text y='.9em' font-size='65' x='16'>💰</text></svg>">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SheetJS (XLSX) untuk Ekspor File Microsoft Excel (.xlsx) asli dengan Multi-Sheet & Rumus -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: radial-gradient(circle at top left, #eef2ff 0%, #f8fafc 45%, #f1f5f9 100%);
+            min-height: 100vh;
+        }
+        /* Glassmorphism Header & Cards */
+        .glass-header {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .modern-card {
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(226, 232, 240, 0.85);
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .modern-card:hover {
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.07), 0 4px 10px -2px rgba(15, 23, 42, 0.03);
+        }
+        /* Custom Checkbox Styling */
+        .custom-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 1.65rem;
+            height: 1.65rem;
+            border: 2px solid #cbd5e1;
+            border-radius: 0.65rem;
+            outline: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            background-color: #ffffff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .custom-checkbox:checked {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-color: #059669;
+            transform: scale(1.06);
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.35);
+        }
+        .custom-checkbox:checked::after {
+            content: '';
+            width: 0.42rem;
+            height: 0.78rem;
+            border: solid white;
+            border-width: 0 2.5px 2.5px 0;
+            transform: rotate(45deg);
+            margin-bottom: 2px;
+        }
+        .custom-checkbox:hover:not(:checked) {
+            border-color: #6366f1;
+            background-color: #eef2ff;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: #ffffff !important;
+            }
+            .print-shadow-none {
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-700">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- LOGIN OVERLAY SCREEN (KHUSUS BENDAHARA X TKJ ONE) -->
+    <div id="login-screen" class="fixed inset-0 z-40 flex items-center justify-center p-4 bg-gradient-to-br from-indigo-950 via-slate-900 to-violet-950 overflow-y-auto">
+        <!-- Decorative Background Glow -->
+        <div class="absolute top-1/4 left-1/4 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-72 h-72 bg-violet-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative w-full max-w-md bg-white/95 backdrop-blur-xl rounded-3xl p-7 sm:p-8 shadow-2xl border border-white/20">
+            <!-- Header Logo -->
+            <div class="text-center mb-7">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600 text-white shadow-lg shadow-indigo-500/30 mb-4">
+                    <i data-lucide="shield-check" class="w-8 h-8"></i>
+                </div>
+                <span class="inline-block px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100 mb-2">
+                    Akses Terbatas • Khusus Bendahara
+                </span>
+                <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Login X TKJ ONE KAS</h2>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">Masuk menggunakan akun resmi Bendahara Kelas untuk mengelola data uang kas.</p>
+            </div>
+
+            <!-- Alert Error Message -->
+            <div id="login-error-box" class="hidden mb-5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2.5">
+                <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 shrink-0"></i>
+                <span id="login-error-text">Username atau Password salah! Hanya Bendahara yang diizinkan masuk.</span>
+            </div>
+
+            <!-- Login Form -->
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label for="login-username" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Username Bendahara</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                            <i data-lucide="user" class="w-4 h-4"></i>
+                        </span>
+                        <input type="text" id="login-username" required autocomplete="off" placeholder="Masukkan Username..."
+                            class="w-full pl-10 pr-4 py-3 text-sm font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="login-password" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Password</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
+                            <i data-lucide="lock" class="w-4 h-4"></i>
+                        </span>
+                        <input type="password" id="login-password" required placeholder="Masukkan Password..."
+                            class="w-full pl-10 pr-11 py-3 text-sm font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 focus:bg-white transition-all">
+                        <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer" title="Lihat/Sembunyikan Password">
+                            <i id="eye-icon" data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 px-4 mt-2 bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <i data-lucide="log-in" class="w-4 h-4"></i>
+                    <span>Masuk Sebagai Bendahara</span>
+                </button>
+            </form>
+
+            <div class="mt-6 pt-5 border-t border-slate-100 text-center">
+                <p class="text-[11px] text-slate-400 font-medium flex items-center justify-center gap-1.5">
+                    <i data-lucide="shield-alert" class="w-3.5 h-3.5 text-amber-500"></i>
+                    <span>Sistem terkunci otomatis untuk selain Bendahara</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP WRAPPER (TERSEMBUNYI SEBELUM LOGIN) -->
+    <div id="app-wrapper" class="hidden">
+
+    <!-- Top Navigation Bar -->
+    <header class="glass-header border-b border-slate-200/80 sticky top-0 z-30 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-18 flex items-center justify-between">
+            <div class="flex items-center gap-3.5">
+                <div class="bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600 text-white p-2.5 rounded-2xl shadow-md shadow-indigo-500/25">
+                    <i data-lucide="wallet" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight bg-gradient-to-r from-slate-900 to-indigo-900 bg-clip-text text-transparent leading-tight">X TKJ ONE KAS</h1>
+                        <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-600 border border-indigo-100">X TKJ ONE</span>
+                    </div>
+                    <p class="text-xs text-slate-500 font-medium">Bendahara Kelas • SMK Pasundan</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-2.5">
+                <button onclick="switchTab('rekapan')" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-emerald-700 bg-emerald-50/90 border border-emerald-200/80 rounded-xl hover:bg-emerald-100 hover:shadow-xs transition-all cursor-pointer" title="Rekapan & Setor WA">
+                    <i data-lucide="message-circle" class="w-4 h-4 text-emerald-600"></i>
+                    <span class="hidden sm:inline">Setor WA</span>
+                </button>
+                <button onclick="exportToExcel()" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-indigo-700 bg-indigo-50/90 border border-indigo-200/80 rounded-xl hover:bg-indigo-100 hover:shadow-xs transition-all cursor-pointer" title="Unduh Laporan Lengkap Microsoft Excel (.xlsx)">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-indigo-600"></i>
+                    <span class="hidden sm:inline">Ekspor Excel</span>
+                </button>
+                <button onclick="window.print()" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:shadow-xs transition-all cursor-pointer" title="Cetak Laporan">
+                    <i data-lucide="printer" class="w-4 h-4 text-slate-500"></i>
+                    <span class="hidden md:inline">Cetak</span>
+                </button>
+                <button onclick="openResetModal()" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-rose-600 bg-rose-50/90 border border-rose-200/80 rounded-xl hover:bg-rose-100 transition-all cursor-pointer" title="Reset Semua Centang">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <span class="hidden lg:inline">Reset Periode</span>
+                </button>
+                <button onclick="handleLogout()" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white bg-slate-800 hover:bg-slate-900 rounded-xl shadow-xs transition-all cursor-pointer" title="Kunci & Keluar Akun Bendahara">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Keluar</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+        <!-- Control & Nominal Setting Banner -->
+        <div class="modern-card rounded-3xl p-5 sm:p-6 print-shadow-none relative overflow-hidden">
+            <div class="absolute -right-12 -top-12 w-40 h-40 bg-indigo-50 rounded-full blur-2xl opacity-70 pointer-events-none"></div>
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+                <!-- Info Keterangan Kas -->
+                <div class="space-y-2 flex-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold bg-indigo-50 text-indigo-700 rounded-full border border-indigo-100">
+                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse"></span>
+                            Pengaturan Bendahara
+                        </span>
+                        <span id="last-updated" class="text-xs font-medium text-slate-400"></span>
+                    </div>
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 pt-1">
+                        <label for="kas-title" class="text-sm font-semibold text-slate-600 whitespace-nowrap">Judul/Periode Kas:</label>
+                        <input type="text" id="kas-title" value="Uang Kas Minggu Ini" onchange="updateSettings()"
+                            class="w-full sm:w-80 px-4 py-2 text-sm font-bold text-slate-900 bg-slate-50/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 focus:bg-white transition-all">
+                    </div>
+                </div>
+
+                <!-- Atur Nominal Kas -->
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-gradient-to-r from-slate-50 to-indigo-50/40 p-4 rounded-2xl border border-slate-200/80 no-print">
+                    <div>
+                        <label for="nominal-input" class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Nominal Iuran per Siswa (Rp)</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-indigo-600 font-bold text-sm">Rp</span>
+                            <input type="number" id="nominal-input" min="0" step="500" value="5000"
+                                class="w-full sm:w-44 pl-10 pr-3.5 py-2 text-base font-extrabold text-slate-900 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 shadow-2xs">
+                        </div>
+                    </div>
+                    <div class="flex sm:flex-col justify-end gap-2 sm:pt-5">
+                        <button onclick="applyNominalToAll()" class="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white text-sm font-semibold rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                            <span>Terapkan Nominal</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            <!-- Card 1: Saldo Bersih (Hero Card) -->
+            <div class="bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 rounded-3xl p-5 sm:p-6 text-white shadow-lg shadow-indigo-600/20 relative overflow-hidden print-shadow-none">
+                <div class="absolute -right-6 -bottom-6 w-28 h-28 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+                <div class="flex items-center justify-between relative z-10">
+                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-100">Saldo Kas Saat Ini</span>
+                    <div class="p-2.5 bg-white/15 backdrop-blur-xs text-white rounded-2xl">
+                        <i data-lucide="landmark" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4 relative z-10">
+                    <h3 id="stat-saldo-bersih" class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Rp 0</h3>
+                    <p class="text-xs text-indigo-100/90 mt-1.5 font-medium">Pengeluaran: <span id="stat-total-keluar" class="font-bold text-rose-200">Rp 0</span></p>
+                </div>
+            </div>
+
+            <!-- Card 2: Total Kas Terkumpul -->
+            <div class="modern-card rounded-3xl p-5 sm:p-6 print-shadow-none">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Uang Masuk (Lunas)</span>
+                    <div class="p-2.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
+                        <i data-lucide="trending-up" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h3 id="stat-total-masuk" class="text-2xl font-extrabold text-slate-900">Rp 0</h3>
+                    <p class="text-xs text-slate-500 mt-1.5 font-medium">Dari <span id="stat-lunas-count" class="font-bold text-emerald-600">0</span> siswa sudah bayar</p>
+                </div>
+            </div>
+
+            <!-- Card 3: Belum Bayar / Tunggakan -->
+            <div class="modern-card rounded-3xl p-5 sm:p-6 print-shadow-none">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Belum Membayar</span>
+                    <div class="p-2.5 bg-amber-50 text-amber-600 rounded-2xl border border-amber-100">
+                        <i data-lucide="clock" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <h3 id="stat-belum-count" class="text-2xl font-extrabold text-slate-900">36 Siswa</h3>
+                    <p class="text-xs text-slate-500 mt-1.5 font-medium">Potensi sisa: <span id="stat-potensi-sisa" class="font-bold text-amber-600">Rp 0</span></p>
+                </div>
+            </div>
+
+            <!-- Card 4: Persentase Pembayaran -->
+            <div class="modern-card rounded-3xl p-5 sm:p-6 print-shadow-none">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Progres Pelunasan</span>
+                    <div class="p-2.5 bg-sky-50 text-sky-600 rounded-2xl border border-sky-100">
+                        <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex items-baseline justify-between">
+                        <h3 id="stat-persentase" class="text-2xl font-extrabold text-slate-900">0%</h3>
+                        <span id="stat-rasio" class="text-xs font-semibold text-slate-500">0 / 36 Siswa</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 mt-3 overflow-hidden p-0.5">
+                        <div id="stat-progress-bar" class="bg-gradient-to-r from-emerald-400 to-teal-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation (Daftar Siswa vs Catatan Pengeluaran vs Rekapan) -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1 no-print">
+            <div class="inline-flex flex-wrap gap-1.5 bg-slate-200/70 p-1.5 rounded-2xl">
+                <button id="tab-siswa" onclick="switchTab('siswa')" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-sm transition-all flex items-center gap-2 cursor-pointer">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                    <span>Daftar Siswa (36)</span>
+                </button>
+                <button id="tab-pengeluaran" onclick="switchTab('pengeluaran')" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-all flex items-center gap-2 cursor-pointer">
+                    <i data-lucide="receipt" class="w-4 h-4"></i>
+                    <span>Pengeluaran</span>
+                    <span id="badge-pengeluaran" class="px-2 py-0.5 text-xs font-bold bg-slate-300/70 text-slate-700 rounded-full">0</span>
+                </button>
+                <button id="tab-rekapan" onclick="switchTab('rekapan')" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-all flex items-center gap-2 cursor-pointer">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                    <span>Rekapan & Setor WA</span>
+                </button>
+            </div>
+
+            <!-- Action Buttons on Siswa Tab -->
+            <div id="siswa-quick-actions" class="flex flex-wrap items-center gap-2.5">
+                <button onclick="openAddStudentModal()" class="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer">
+                    <i data-lucide="user-plus" class="w-4 h-4 text-indigo-600"></i>
+                    <span>Tambah Siswa</span>
+                </button>
+                <button onclick="toggleAllStudents(true)" class="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 cursor-pointer">
+                    <i data-lucide="check-check" class="w-4 h-4"></i>
+                    <span>Centang Semua</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- SECTION 1: DAFTAR SISWA/SISWI -->
+        <div id="section-siswa" class="modern-card rounded-3xl overflow-hidden print-shadow-none">
+            <!-- Filter & Search Bar -->
+            <div class="p-4 sm:p-5 border-b border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center no-print">
+                <!-- Search -->
+                <div class="relative flex-1 max-w-md">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" id="search-input" oninput="renderStudents()" placeholder="Cari nama siswa/siswi..."
+                        class="w-full pl-10 pr-4 py-2.5 text-sm font-medium bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all">
+                </div>
+
+                <!-- Status Filter -->
+                <div class="flex items-center gap-1 bg-slate-200/70 p-1 rounded-xl self-start sm:self-auto">
+                    <button onclick="setFilter('all')" id="filter-all" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-900 shadow-xs transition-all cursor-pointer">Semua</button>
+                    <button onclick="setFilter('paid')" id="filter-paid" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer">Sudah Bayar</button>
+                    <button onclick="setFilter('unpaid')" id="filter-unpaid" class="px-3.5 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer">Belum Bayar</button>
+                </div>
+            </div>
+
+            <!-- Responsive Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                            <th class="py-3.5 px-4 w-14 text-center">No</th>
+                            <th class="py-3.5 px-4">Nama Siswa / Siswi</th>
+                            <th class="py-3.5 px-4 w-44">Nominal Bayar</th>
+                            <th class="py-3.5 px-4 w-36 text-center">Status</th>
+                            <th class="py-3.5 px-4 w-44 hidden md:table-cell">Waktu Bayar</th>
+                            <th class="py-3.5 px-4 w-28 text-center">Centang</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-table-body" class="divide-y divide-slate-100 text-sm">
+                        <!-- Rendered dynamically by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty Search State -->
+            <div id="empty-state" class="hidden py-12 px-4 text-center">
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 text-slate-400 mb-3">
+                    <i data-lucide="search-x" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-sm font-semibold text-slate-900">Siswa tidak ditemukan</h3>
+                <p class="text-xs text-slate-500 mt-1">Coba kata kunci pencarian lain atau ubah filter status.</p>
+            </div>
+        </div>
+
+        <!-- SECTION 2: CATATAN PENGELUARAN KAS -->
+        <div id="section-pengeluaran" class="hidden space-y-4">
+            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm">
+                <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-rose-500"></i>
+                    <span>Catat Pengeluaran Kas Kelas</span>
+                </h3>
+                <form onsubmit="addExpense(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                    <div class="sm:col-span-6">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Keperluan / Keterangan</label>
+                        <input type="text" id="expense-desc" required placeholder="Contoh: Beli spidol papan tulis & penghapus"
+                            class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                    </div>
+                    <div class="sm:col-span-4">
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Jumlah Pengeluaran (Rp)</label>
+                        <input type="number" id="expense-amount" required min="100" step="100" placeholder="15000"
+                            class="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white">
+                    </div>
+                    <div class="sm:col-span-2 flex items-end">
+                        <button type="submit" class="w-full py-2 px-4 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors cursor-pointer">
+                            Simpan
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabel Riwayat Pengeluaran -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-4 sm:p-5 border-b border-slate-200 flex justify-between items-center">
+                    <h4 class="font-bold text-slate-800 text-sm">Riwayat Pengeluaran</h4>
+                    <span id="expense-total-badge" class="text-xs font-semibold px-2.5 py-1 bg-rose-50 text-rose-700 rounded-lg">Total: Rp 0</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                                <th class="py-3 px-4">Tanggal</th>
+                                <th class="py-3 px-4">Keterangan</th>
+                                <th class="py-3 px-4 text-right">Nominal</th>
+                                <th class="py-3 px-4 w-16 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expense-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Rendered by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="expense-empty" class="py-10 text-center text-slate-400 text-xs">
+                    Belum ada catatan pengeluaran kas.
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: REKAPAN WAKTU (JAM, HARI, BULAN, TAHUN) & SETOR WA WALI KELAS -->
+        <div id="section-rekapan" class="hidden space-y-6">
+            
+            <!-- Panel Kirim / Setor ke WhatsApp Wali Kelas -->
+            <div class="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-5 sm:p-6 text-white shadow-md">
+                <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div class="space-y-2 max-w-2xl">
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-emerald-50 text-xs font-semibold backdrop-blur-xs">
+                            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                            <span>Setoran Laporan Otomatis</span>
+                        </div>
+                        <h3 class="text-xl font-bold">Setor Rekapan Uang Kas ke WhatsApp Wali Kelas</h3>
+                        <p class="text-sm text-emerald-100 leading-relaxed">
+                            Kirim laporan kas secara otomatis sesuai periode yang dipilih (Hari Ini, Bulan Ini, Tahun Ini, atau Semua) langsung ke WhatsApp Wali Kelas agar rapi dan transparan.
+                        </p>
+                    </div>
+
+                    <div class="bg-white/10 backdrop-blur-xs p-4 rounded-xl border border-white/20 flex flex-col sm:flex-row items-stretch sm:items-end gap-3 shrink-0">
+                        <div>
+                            <label for="wa-wali-kelas" class="block text-xs font-semibold text-emerald-100 uppercase tracking-wider mb-1">
+                                No. WhatsApp Wali Kelas
+                            </label>
+                            <input type="tel" id="wa-wali-kelas" onchange="saveWaliKelasPhone()" placeholder="Contoh: 081234567890"
+                                class="w-full sm:w-52 px-3.5 py-2 text-sm font-semibold text-slate-900 bg-white rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300 placeholder:text-slate-400 placeholder:font-normal">
+                        </div>
+                        <button onclick="sendReportToWhatsApp()" class="px-5 py-2.5 bg-white hover:bg-emerald-50 text-emerald-700 font-bold text-sm rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
+                            <i data-lucide="message-circle" class="w-4 h-4 fill-emerald-600 text-emerald-600"></i>
+                            <span>Setor ke WA Sekarang</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Periode Rekapan (Jam, Hari, Bulan, Tahun, Semua) -->
+            <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-5">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="calendar-clock" class="w-5 h-5 text-indigo-600"></i>
+                            <span>Rekapan Otomatis: Jam, Tanggal, Bulan & Tahun</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Terhitung otomatis mengikuti jam, tanggal, bulan, dan tahun saat ini agar bendahara langsung siap setor ke Wali Kelas.</p>
+                    </div>
+
+                    <!-- Live Clock & Date Badge -->
+                    <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-800 text-xs font-bold self-start sm:self-auto">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                        <span id="live-clock-display">Memuat waktu...</span>
+                    </div>
+                </div>
+
+                <!-- 4 Kartu Ringkasan Otomatis Real-Time (Jam Ini, Hari Ini, Bulan Ini, Tahun Ini) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                    <!-- Otomatis Jam Ini -->
+                    <div class="p-4 rounded-2xl bg-gradient-to-br from-violet-50 to-purple-50/70 border border-violet-200/80">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-violet-700 uppercase tracking-wider">Otomatis Jam Ini</span>
+                            <span id="auto-label-hour" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700">00:00</span>
+                        </div>
+                        <div id="auto-net-hour" class="text-lg font-extrabold text-violet-950 mt-1.5">Rp 0</div>
+                        <div class="text-[11px] text-violet-700/90 mt-1 flex justify-between">
+                            <span>Masuk: <b id="auto-in-hour">Rp 0</b></span>
+                            <span>Keluar: <b id="auto-out-hour">Rp 0</b></span>
+                        </div>
+                    </div>
+
+                    <!-- Otomatis Tanggal / Hari Ini -->
+                    <div class="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50/70 border border-emerald-200/80">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Otomatis Hari Ini</span>
+                            <span id="auto-label-day" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">-</span>
+                        </div>
+                        <div id="auto-net-day" class="text-lg font-extrabold text-emerald-950 mt-1.5">Rp 0</div>
+                        <div class="text-[11px] text-emerald-700/90 mt-1 flex justify-between">
+                            <span>Masuk: <b id="auto-in-day">Rp 0</b></span>
+                            <span>Keluar: <b id="auto-out-day">Rp 0</b></span>
+                        </div>
+                    </div>
+
+                    <!-- Otomatis Bulan Ini -->
+                    <div class="p-4 rounded-2xl bg-gradient-to-br from-sky-50 to-blue-50/70 border border-sky-200/80">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-sky-700 uppercase tracking-wider">Otomatis Bulan Ini</span>
+                            <span id="auto-label-month" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-700">-</span>
+                        </div>
+                        <div id="auto-net-month" class="text-lg font-extrabold text-sky-950 mt-1.5">Rp 0</div>
+                        <div class="text-[11px] text-sky-700/90 mt-1 flex justify-between">
+                            <span>Masuk: <b id="auto-in-month">Rp 0</b></span>
+                            <span>Keluar: <b id="auto-out-month">Rp 0</b></span>
+                        </div>
+                    </div>
+
+                    <!-- Otomatis Tahun Ini -->
+                    <div class="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50/70 border border-amber-200/80">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Otomatis Tahun Ini</span>
+                            <span id="auto-label-year" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">-</span>
+                        </div>
+                        <div id="auto-net-year" class="text-lg font-extrabold text-amber-950 mt-1.5">Rp 0</div>
+                        <div class="text-[11px] text-amber-700/90 mt-1 flex justify-between">
+                            <span>Masuk: <b id="auto-in-year">Rp 0</b></span>
+                            <span>Keluar: <b id="auto-out-year">Rp 0</b></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Pilih Rentang Waktu Detail -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                    <span class="text-xs font-bold text-slate-600">Pilih Mode Tampilan Detail & Setoran WA:</span>
+                    <div class="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl">
+                        <button onclick="setRecapPeriod('auto_all')" id="recap-btn-auto_all" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-indigo-600 shadow-sm transition-all cursor-pointer">Otomatis Lengkap (Jam/Tgl/Bln/Thn)</button>
+                        <button onclick="setRecapPeriod('hour')" id="recap-btn-hour" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer">Per Jam</button>
+                        <button onclick="setRecapPeriod('day')" id="recap-btn-day" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer">Per Tanggal</button>
+                        <button onclick="setRecapPeriod('month')" id="recap-btn-month" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer">Per Bulan</button>
+                        <button onclick="setRecapPeriod('year')" id="recap-btn-year" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer">Per Tahun</button>
+                    </div>
+                </div>
+
+                <!-- Sub-Filter Pemilih Tanggal / Bulan / Tahun Spesifik -->
+                <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200/70">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="text-xs font-semibold text-slate-600">Waktu Aktif:</span>
+                        <input type="date" id="recap-date-picker" onchange="renderRecap()" class="px-3 py-1.5 text-xs font-medium bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <input type="month" id="recap-month-picker" onchange="renderRecap()" class="hidden px-3 py-1.5 text-xs font-medium bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <select id="recap-year-picker" onchange="renderRecap()" class="hidden px-3 py-1.5 text-xs font-medium bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+                        <button onclick="syncPickersToNow()" class="px-2.5 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-100/80 hover:bg-indigo-200/80 rounded-lg transition-colors cursor-pointer" title="Reset ke waktu sekarang">
+                            Waktu Sekarang
+                        </button>
+                    </div>
+                    <div class="text-xs font-medium text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100" id="recap-period-label">
+                        Menampilkan: Otomatis Lengkap Hari Ini
+                    </div>
+                </div>
+
+                <!-- Ringkasan Angka Periode Terpilih -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200/80">
+                        <span class="text-xs font-semibold text-emerald-700 uppercase">Pemasukan Terpilih</span>
+                        <div id="recap-masuk" class="text-xl font-bold text-emerald-900 mt-1">Rp 0</div>
+                        <span id="recap-masuk-count" class="text-xs text-emerald-600">0 transaksi pembayaran</span>
+                    </div>
+                    <div class="p-4 rounded-xl bg-rose-50/70 border border-rose-200/80">
+                        <span class="text-xs font-semibold text-rose-700 uppercase">Pengeluaran Terpilih</span>
+                        <div id="recap-keluar" class="text-xl font-bold text-rose-900 mt-1">Rp 0</div>
+                        <span id="recap-keluar-count" class="text-xs text-rose-600">0 transaksi pengeluaran</span>
+                    </div>
+                    <div class="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200/80">
+                        <span class="text-xs font-semibold text-indigo-700 uppercase">Selisih / Kas Bersih</span>
+                        <div id="recap-bersih" class="text-xl font-bold text-indigo-900 mt-1">Rp 0</div>
+                        <span class="text-xs text-indigo-600">Masuk dikurangi keluar</span>
+                    </div>
+                </div>
+
+                <!-- Tabel Rincian Log Transaksi Berdasarkan Waktu -->
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-sm font-bold text-slate-800">Rincian Transaksi (Jam, Tanggal, Bulan & Tahun)</h4>
+                        <button onclick="copyRecapText()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            <span>Salin Teks Rekapan</span>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase">
+                                    <th class="py-3 px-4">Waktu (Jam, Tanggal, Bulan, Tahun)</th>
+                                    <th class="py-3 px-4">Jenis</th>
+                                    <th class="py-3 px-4">Nama / Keterangan</th>
+                                    <th class="py-3 px-4 text-right">Nominal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recap-table-body" class="divide-y divide-slate-100 text-sm">
+                                <!-- Rendered dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="recap-empty" class="hidden py-10 text-center text-slate-400 text-xs">
+                        Tidak ada transaksi pembayaran atau pengeluaran pada rentang waktu ini.
+                    </div>
+                </div>
+
+                <!-- Preview Pesan WhatsApp -->
+                <div class="bg-slate-900 rounded-xl p-4 text-slate-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                            <span>Pratinjau Pesan Setoran WhatsApp ke Wali Kelas (Otomatis Jam, Tanggal, Bulan & Tahun):</span>
+                        </span>
+                        <button onclick="sendReportToWhatsApp()" class="text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 px-3 py-1 rounded-lg transition-colors cursor-pointer">
+                            Kirim WA
+                        </button>
+                    </div>
+                    <pre id="wa-preview-box" class="text-xs font-mono whitespace-pre-wrap text-slate-300 bg-slate-950/60 p-3.5 rounded-lg border border-slate-800 max-h-72 overflow-y-auto leading-relaxed"></pre>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-slate-400 no-print">
+        X TKJ ONE KAS &bull; Sistem Manajemen Kas Siswa/Siswi X TKJ ONE &ndash; SMK Pasundan.
+    </footer>
+
+    </div> <!-- END OF MAIN APP WRAPPER -->
+
+    <!-- Modal: Edit Nominal Individu / Catatan Siswa -->
+    <div id="edit-student-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100 transform transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-900">Atur Nominal Khusus</h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p id="edit-student-name" class="text-sm font-semibold text-indigo-600 mb-4 bg-indigo-50 px-3 py-2 rounded-lg"></p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nominal Bayar Siswa Ini (Rp)</label>
+                    <input type="number" id="edit-student-amount" min="0" step="500"
+                        class="w-full px-3.5 py-2.5 text-base font-bold text-slate-900 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <p class="text-xs text-slate-500 mt-1">Gunakan ini jika siswa mencicil atau membayar lebih dari nominal standar.</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Catatan (Opsional)</label>
+                    <input type="text" id="edit-student-note" placeholder="Contoh: Cicil 1, Lunas 2 minggu, dll"
+                        class="w-full px-3.5 py-2 text-sm text-slate-900 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+            <div class="mt-6 flex items-center justify-between gap-3">
+                <button onclick="deleteStudent()" class="px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer">
+                    Hapus Siswa
+                </button>
+                <div class="flex gap-2">
+                    <button onclick="closeEditModal()" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer">
+                        Batal
+                    </button>
+                    <button onclick="saveStudentEdit()" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors cursor-pointer">
+                        Simpan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Tambah Siswa Baru -->
+    <div id="add-student-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-900">Tambah Siswa/Siswi Baru</h3>
+                <button onclick="closeAddStudentModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="confirmAddStudent(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nama Lengkap Siswa/Siswi</label>
+                    <input type="text" id="new-student-name" required placeholder="Masukkan nama lengkap..."
+                        class="w-full px-3.5 py-2.5 text-sm text-slate-900 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAddStudentModal()" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm cursor-pointer">
+                        Tambahkan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Konfirmasi Reset Periode -->
+    <div id="reset-modal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-100">
+            <div class="flex items-center gap-3 text-rose-600 mb-3">
+                <div class="p-2.5 bg-rose-50 rounded-full">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">Reset Status Pembayaran?</h3>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed mb-6">
+                Semua tanda centang (Lunas) pada seluruh siswa akan dihapus untuk memulai periode penagihan kas yang baru. Daftar nama siswa dan riwayat rekapan tetap tersimpan.
+            </p>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeResetModal()" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl cursor-pointer">
+                    Batal
+                </button>
+                <button onclick="confirmReset()" class="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm cursor-pointer">
+                    Ya, Reset Sekarang
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Kunci Penyimpanan Browser (localStorage & sessionStorage) agar data tetap tersimpan setelah dipublikasikan
+        const STORAGE_KEY = 'kaskelas_xtkjone_smkpasundan_v1';
+        const AUTH_SESSION_KEY = 'kaskelas_bendahara_auth_v1';
+
+        // Daftar Nama Siswa/Siswi Awal (36 Siswa)
+        const initialStudentNames = [
+            "Ahmadul Baydowi",
+            "Andini Fitriani",
+            "Arya Suyatna",
+            "Bara Adyla",
+            "Bayu Saputra",
+            "Cahya Nurohman",
+            "Dhefa Saputra",
+            "Diah Asifah",
+            "Dias Rahman",
+            "Dzaky Maulana",
+            "Eka Putra Alamasah",
+            "Fiqri Dinsyah Ramadhan",
+            "Firas Saputra",
+            "Hafi Saputra",
+            "Halimatis Syadiah",
+            "Hamdan",
+            "Ibnu Anvary",
+            "Kevin Azhar",
+            "Laode Jumaid Dil Awal",
+            "Lutfya Maliha",
+            "Miftahurrohman",
+            "Moh Fikri",
+            "Muhamad Fawwaz",
+            "Muhamad Isa",
+            "Muhamad Prasetyo",
+            "Muhamad Raditya",
+            "Muhamad Zaki",
+            "Muhamad Fadlan",
+            "Nahrifa Arkha",
+            "Rafa Ramadan",
+            "Raihan Ahmad Yusuf",
+            "Rizki Maulana",
+            "Taskia",
+            "Wilda Rahayu",
+            "Wiradani",
+            "Zulkifli"
+        ];
+
+        // State Aplikasi
+        let appState = {
+            title: 'Uang Kas Minggu Ini',
+            defaultNominal: 5000,
+            waliKelasPhone: '',
+            students: [],
+            expenses: [],
+            historyLogs: [],
+            lastUpdated: null
+        };
+
+        let currentFilter = 'all'; // 'all', 'paid', 'unpaid'
+        let currentRecapPeriod = 'auto_all'; // 'auto_all', 'hour', 'day', 'month', 'year'
+        let editingStudentId = null;
+
+        // Kredensial Khusus 1 Siswi Bendahara
+        const BENDAHARA_ACCOUNT = {
+            username: 'X TKJ ONE',
+            password: 'SMK PASUNDAN'
+        };
+        let isAuthenticated = false;
+
+        // Helper aman untuk Storage (mendukung localStorage maupun fallback memori jika diblokir)
+        function safeGetStorage(type, key) {
+            try {
+                const store = type === 'session' ? window.sessionStorage : window.localStorage;
+                return store.getItem(key);
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function safeSetStorage(type, key, value) {
+            try {
+                const store = type === 'session' ? window.sessionStorage : window.localStorage;
+                store.setItem(key, value);
+            } catch (err) {
+                // Abaikan jika browser memblokir storage pada mode privasi tertentu
+            }
+        }
+
+        function safeRemoveStorage(type, key) {
+            try {
+                const store = type === 'session' ? window.sessionStorage : window.localStorage;
+                store.removeItem(key);
+            } catch (err) {
+                // Abaikan
+            }
+        }
+
+        // Fungsi Login Bendahara
+        function handleLogin(e) {
+            e.preventDefault();
+            const inputUser = document.getElementById('login-username').value.trim();
+            const inputPass = document.getElementById('login-password').value.trim();
+            const errorBox = document.getElementById('login-error-box');
+            const errorText = document.getElementById('login-error-text');
+
+            if (inputUser === BENDAHARA_ACCOUNT.username && inputPass === BENDAHARA_ACCOUNT.password) {
+                isAuthenticated = true;
+                safeSetStorage('session', AUTH_SESSION_KEY, 'true');
+                errorBox.classList.add('hidden');
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-wrapper').classList.remove('hidden');
+                showToast('Selamat datang, Bendahara X TKJ ONE!');
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            } else {
+                isAuthenticated = false;
+                errorText.textContent = 'Akses Ditolak! Username atau Password salah. Halaman ini hanya untuk Bendahara.';
+                errorBox.classList.remove('hidden');
+                document.getElementById('login-password').value = '';
+                document.getElementById('login-password').focus();
+                showToast('Login gagal! Bukan akun Bendahara.', 'error');
+            }
+        }
+
+        // Toggle Lihat / Sembunyikan Password
+        function togglePasswordVisibility() {
+            const passInput = document.getElementById('login-password');
+            const eyeIcon = document.getElementById('eye-icon');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                passInput.type = 'password';
+                eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // Fungsi Logout / Kunci Kembali Website
+        function handleLogout() {
+            isAuthenticated = false;
+            safeRemoveStorage('session', AUTH_SESSION_KEY);
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            document.getElementById('login-error-box').classList.add('hidden');
+            document.getElementById('app-wrapper').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            showToast('Anda telah keluar. Sistem dikunci kembali.', 'warning');
+        }
+
+        // Inisialisasi Aplikasi
+        function initApp() {
+            const savedData = safeGetStorage('local', STORAGE_KEY);
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    if (parsed && Array.isArray(parsed.students)) {
+                        appState = { ...appState, ...parsed };
+                    } else {
+                        setupDefaultData();
+                    }
+                } catch (e) {
+                    setupDefaultData();
+                }
+            } else {
+                setupDefaultData();
+            }
+
+            // Cek apakah sesi bendahara masih aktif di tab ini
+            if (safeGetStorage('session', AUTH_SESSION_KEY) === 'true') {
+                isAuthenticated = true;
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-wrapper').classList.remove('hidden');
+            }
+
+            // Sinkronisasi input UI dengan state
+            document.getElementById('kas-title').value = appState.title;
+            document.getElementById('nominal-input').value = appState.defaultNominal;
+            document.getElementById('wa-wali-kelas').value = appState.waliKelasPhone || '';
+
+            // Setup default date/month/year pickers untuk rekapan
+            initRecapPickers();
+            startLiveClock();
+
+            renderAll();
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        function startLiveClock() {
+            const updateClock = () => {
+                const now = new Date();
+                const clockEl = document.getElementById('live-clock-display');
+                if (clockEl) {
+                    const tgl = now.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+                    const jam = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    clockEl.textContent = `${tgl} • Jam ${jam} WIB`;
+                }
+            };
+            updateClock();
+            setInterval(updateClock, 1000);
+        }
+
+        function syncPickersToNow() {
+            initRecapPickers();
+            renderRecap();
+            showToast('Waktu rekapan disinkronkan ke waktu sekarang');
+        }
+
+        function initRecapPickers() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+
+            document.getElementById('recap-date-picker').value = `${yyyy}-${mm}-${dd}`;
+            document.getElementById('recap-month-picker').value = `${yyyy}-${mm}`;
+
+            const yearSelect = document.getElementById('recap-year-picker');
+            yearSelect.innerHTML = '';
+            for (let y = yyyy; y >= yyyy - 5; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = `Tahun ${y}`;
+                yearSelect.appendChild(opt);
+            }
+        }
+
+        function setupDefaultData() {
+            appState.students = initialStudentNames.map((name, index) => ({
+                id: 'std_' + (index + 1) + '_' + Date.now(),
+                name: name,
+                paid: false,
+                amount: appState.defaultNominal,
+                paidAt: null,
+                paidTimestamp: null,
+                note: ''
+            }));
+            appState.historyLogs = [];
+            saveState();
+        }
+
+        function saveState() {
+            appState.lastUpdated = new Date().toLocaleString('id-ID', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+            safeSetStorage('local', STORAGE_KEY, JSON.stringify(appState));
+            updateLastUpdatedLabel();
+        }
+
+        function updateLastUpdatedLabel() {
+            const el = document.getElementById('last-updated');
+            if (appState.lastUpdated && el) {
+                el.textContent = `Tersimpan: ${appState.lastUpdated}`;
+            }
+        }
+
+        // Format Rupiah
+        function formatRupiah(angka) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(angka || 0);
+        }
+
+        // Toast Notification
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgClass = type === 'success' ? 'bg-slate-900 text-white' : 
+                            type === 'warning' ? 'bg-amber-600 text-white' : 'bg-rose-600 text-white';
+            
+            toast.className = `${bgClass} px-4 py-3 rounded-xl shadow-lg text-xs sm:text-sm font-medium flex items-center gap-2.5 transform transition-all duration-300 translate-y-2 opacity-0`;
+            toast.innerHTML = `
+                <i data-lucide="${type === 'success' ? 'check-circle' : 'info'}" class="w-4 h-4 shrink-0"></i>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 2800);
+        }
+
+        // Render Semua Komponen
+        function renderAll() {
+            updateLastUpdatedLabel();
+            renderSummary();
+            renderStudents();
+            renderExpenses();
+            renderRecap();
+        }
+
+        // Update Ringkasan Kartu Statistik
+        function renderSummary() {
+            const totalStudents = appState.students.length;
+            const paidStudents = appState.students.filter(s => s.paid);
+            const unpaidStudents = appState.students.filter(s => !s.paid);
+
+            const totalMasuk = paidStudents.reduce((sum, s) => sum + Number(s.amount || 0), 0);
+            const totalKeluar = appState.expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+            const saldoBersih = totalMasuk - totalKeluar;
+            const potensiSisa = unpaidStudents.reduce((sum, s) => sum + Number(s.amount || 0), 0);
+
+            const percentage = totalStudents > 0 ? Math.round((paidStudents.length / totalStudents) * 100) : 0;
+
+            document.getElementById('stat-total-masuk').textContent = formatRupiah(totalMasuk);
+            document.getElementById('stat-lunas-count').textContent = paidStudents.length;
+            
+            const saldoEl = document.getElementById('stat-saldo-bersih');
+            saldoEl.textContent = formatRupiah(saldoBersih);
+            saldoEl.className = `text-2xl sm:text-3xl font-extrabold tracking-tight ${saldoBersih < 0 ? 'text-rose-200' : 'text-white'}`;
+            
+            document.getElementById('stat-total-keluar').textContent = formatRupiah(totalKeluar);
+            document.getElementById('stat-belum-count').textContent = `${unpaidStudents.length} Siswa`;
+            document.getElementById('stat-potensi-sisa').textContent = formatRupiah(potensiSisa);
+
+            document.getElementById('stat-persentase').textContent = `${percentage}%`;
+            document.getElementById('stat-rasio').textContent = `${paidStudents.length} / ${totalStudents} Siswa`;
+            document.getElementById('stat-progress-bar').style.width = `${percentage}%`;
+
+            // Update Tab Count
+            document.getElementById('tab-siswa').querySelector('span').textContent = `Daftar Siswa (${totalStudents})`;
+            document.getElementById('badge-pengeluaran').textContent = appState.expenses.length;
+        }
+
+        // Helper Avatar Inisial Warna-Warni Modern
+        function getStudentAvatar(name, isPaid) {
+            const parts = name.trim().split(' ');
+            const initials = parts.length > 1 
+                ? (parts[0][0] + parts[1][0]).toUpperCase() 
+                : name.slice(0, 2).toUpperCase();
+            
+            if (isPaid) {
+                return `<div class="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">${initials}</div>`;
+            }
+            const palettes = [
+                'bg-indigo-100 text-indigo-700',
+                'bg-violet-100 text-violet-700',
+                'bg-sky-100 text-sky-700',
+                'bg-amber-100 text-amber-700',
+                'bg-rose-100 text-rose-700'
+            ];
+            const colorClass = palettes[name.length % palettes.length];
+            return `<div class="w-9 h-9 rounded-full ${colorClass} font-bold text-xs flex items-center justify-center shrink-0">${initials}</div>`;
+        }
+
+        // Render Tabel Siswa
+        function renderStudents() {
+            const tbody = document.getElementById('student-table-body');
+            const emptyState = document.getElementById('empty-state');
+            const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+
+            const filtered = appState.students.filter(student => {
+                const matchesSearch = student.name.toLowerCase().includes(searchQuery) || 
+                                      (student.note && student.note.toLowerCase().includes(searchQuery));
+                if (currentFilter === 'paid') return matchesSearch && student.paid;
+                if (currentFilter === 'unpaid') return matchesSearch && !student.paid;
+                return matchesSearch;
+            });
+
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filtered.forEach((student) => {
+                const originalIndex = appState.students.findIndex(s => s.id === student.id) + 1;
+                
+                const tr = document.createElement('tr');
+                tr.className = `transition-colors ${student.paid ? 'bg-emerald-50/45 hover:bg-emerald-50/80' : 'hover:bg-slate-50/90'}`;
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4 text-center font-semibold text-slate-400 text-xs">
+                        ${originalIndex}
+                    </td>
+                    <td class="py-3.5 px-4">
+                        <div class="flex items-center gap-3">
+                            ${getStudentAvatar(student.name, student.paid)}
+                            <div>
+                                <div class="font-bold text-slate-900 ${student.paid ? 'text-emerald-950' : ''}">${student.name}</div>
+                                ${student.note ? `<div class="text-xs font-medium text-indigo-600 mt-0.5 flex items-center gap-1"><i data-lucide="file-text" class="w-3 h-3"></i> ${student.note}</div>` : ''}
+                                <div class="text-[11px] text-slate-400 md:hidden mt-0.5">
+                                    ${student.paid && student.paidAt ? `Dibayar: ${student.paidAt}` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                        <button onclick="openEditModal('${student.id}')" class="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-transparent hover:border-slate-200 hover:bg-white hover:shadow-2xs transition-all text-left cursor-pointer" title="Klik untuk ubah nominal khusus siswa ini">
+                            <span class="font-bold ${student.paid ? 'text-emerald-700' : 'text-slate-700'}">${formatRupiah(student.amount)}</span>
+                            <i data-lucide="pencil" class="w-3.5 h-3.5 text-slate-400 opacity-60 group-hover:opacity-100 group-hover:text-indigo-600 no-print"></i>
+                        </button>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                        ${student.paid 
+                            ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100/90 text-emerald-800 border border-emerald-200/80">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Lunas
+                               </span>`
+                            : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 border border-slate-200/80">
+                                Belum
+                               </span>`
+                        }
+                    </td>
+                    <td class="py-3.5 px-4 text-xs font-medium text-slate-500 hidden md:table-cell">
+                        ${student.paid && student.paidAt ? student.paidAt : '-'}
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                        <label class="inline-flex items-center justify-center p-1.5 cursor-pointer">
+                            <input type="checkbox" class="custom-checkbox" 
+                                ${student.paid ? 'checked' : ''} 
+                                onchange="togglePayment('${student.id}')"
+                                aria-label="Tandai ${student.name} sudah bayar">
+                        </label>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // Centang / Batal Centang Pembayaran Siswa
+        function togglePayment(id) {
+            const student = appState.students.find(s => s.id === id);
+            if (!student) return;
+
+            student.paid = !student.paid;
+            if (student.paid) {
+                const now = new Date();
+                student.paidTimestamp = now.toISOString();
+                student.paidAt = now.toLocaleDateString('id-ID', {
+                    day: '2-digit', month: 'short', year: 'numeric'
+                }) + ', ' + now.toLocaleTimeString('id-ID', {
+                    hour: '2-digit', minute: '2-digit'
+                });
+
+                appState.historyLogs.unshift({
+                    id: 'log_' + Date.now() + '_' + student.id,
+                    studentId: student.id,
+                    type: 'income',
+                    title: student.name,
+                    note: student.note || appState.title,
+                    amount: Number(student.amount || 0),
+                    timestamp: now.toISOString()
+                });
+
+                showToast(`${student.name} ditandai LUNAS (${formatRupiah(student.amount)})`);
+            } else {
+                student.paidAt = null;
+                student.paidTimestamp = null;
+                const logIdx = appState.historyLogs.findIndex(l => l.studentId === student.id && l.type === 'income');
+                if (logIdx !== -1) {
+                    appState.historyLogs.splice(logIdx, 1);
+                }
+                showToast(`Status ${student.name} diubah menjadi Belum Bayar`, 'warning');
+            }
+
+            saveState();
+            renderSummary();
+            renderStudents();
+            renderRecap();
+        }
+
+        // Centang Semua Siswa
+        function toggleAllStudents(status) {
+            const now = new Date();
+            const isoNow = now.toISOString();
+            const timeStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + 
+                            now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+            appState.students.forEach(s => {
+                if (!s.paid && status) {
+                    s.paid = true;
+                    s.paidAt = timeStr;
+                    s.paidTimestamp = isoNow;
+                    appState.historyLogs.unshift({
+                        id: 'log_' + Date.now() + '_' + s.id,
+                        studentId: s.id,
+                        type: 'income',
+                        title: s.name,
+                        note: s.note || appState.title,
+                        amount: Number(s.amount || 0),
+                        timestamp: isoNow
+                    });
+                }
+            });
+
+            saveState();
+            renderAll();
+            showToast('Seluruh siswa berhasil dicentang Lunas!');
+        }
+
+        // Terapkan Pengaturan Judul & Nominal Massal
+        function updateSettings() {
+            appState.title = document.getElementById('kas-title').value.trim() || 'Uang Kas Kelas';
+            saveState();
+            showToast('Judul periode kas diperbarui');
+        }
+
+        function applyNominalToAll() {
+            const inputVal = parseInt(document.getElementById('nominal-input').value, 10);
+            if (isNaN(inputVal) || inputVal < 0) {
+                showToast('Masukkan nominal angka yang valid!', 'error');
+                return;
+            }
+
+            appState.defaultNominal = inputVal;
+            appState.students.forEach(s => {
+                s.amount = inputVal;
+            });
+
+            saveState();
+            renderAll();
+            showToast(`Nominal kas diatur ke ${formatRupiah(inputVal)} untuk semua siswa`);
+        }
+
+        // Filter Tab Status
+        function setFilter(filterType) {
+            currentFilter = filterType;
+            ['all', 'paid', 'unpaid'].forEach(type => {
+                const btn = document.getElementById(`filter-${type}`);
+                if (type === filterType) {
+                    btn.className = 'px-3.5 py-1.5 text-xs font-bold rounded-lg bg-white text-slate-900 shadow-xs transition-all cursor-pointer';
+                } else {
+                    btn.className = 'px-3.5 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer';
+                }
+            });
+            renderStudents();
+        }
+
+        // Switch Tab Utama (Siswa vs Pengeluaran vs Rekapan)
+        function switchTab(tabName) {
+            const tabs = ['siswa', 'pengeluaran', 'rekapan'];
+            const quickActions = document.getElementById('siswa-quick-actions');
+
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                const sec = document.getElementById(`section-${t}`);
+                if (t === tabName) {
+                    btn.className = 'px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-sm transition-all flex items-center gap-2 cursor-pointer';
+                    sec.classList.remove('hidden');
+                } else {
+                    btn.className = 'px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-white/60 transition-all flex items-center gap-2 cursor-pointer';
+                    sec.classList.add('hidden');
+                }
+            });
+
+            if (tabName === 'siswa') {
+                quickActions.classList.remove('hidden');
+            } else {
+                quickActions.classList.add('hidden');
+            }
+
+            if (tabName === 'rekapan') {
+                renderRecap();
+            }
+        }
+
+        // Modal Edit Siswa Individu
+        function openEditModal(id) {
+            const student = appState.students.find(s => s.id === id);
+            if (!student) return;
+
+            editingStudentId = id;
+            document.getElementById('edit-student-name').textContent = student.name;
+            document.getElementById('edit-student-amount').value = student.amount;
+            document.getElementById('edit-student-note').value = student.note || '';
+            document.getElementById('edit-student-modal').classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            editingStudentId = null;
+            document.getElementById('edit-student-modal').classList.add('hidden');
+        }
+
+        function saveStudentEdit() {
+            if (!editingStudentId) return;
+            const student = appState.students.find(s => s.id === editingStudentId);
+            const newAmount = parseInt(document.getElementById('edit-student-amount').value, 10);
+            const newNote = document.getElementById('edit-student-note').value.trim();
+
+            if (isNaN(newAmount) || newAmount < 0) {
+                showToast('Nominal tidak valid', 'error');
+                return;
+            }
+
+            student.amount = newAmount;
+            student.note = newNote;
+
+            saveState();
+            renderAll();
+            closeEditModal();
+            showToast(`Data ${student.name} diperbarui`);
+        }
+
+        function deleteStudent() {
+            if (!editingStudentId) return;
+            const student = appState.students.find(s => s.id === editingStudentId);
+            appState.students = appState.students.filter(s => s.id !== editingStudentId);
+            
+            saveState();
+            renderAll();
+            closeEditModal();
+            showToast(`${student.name} dihapus dari daftar`, 'warning');
+        }
+
+        // Modal Tambah Siswa Baru
+        function openAddStudentModal() {
+            document.getElementById('new-student-name').value = '';
+            document.getElementById('add-student-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('new-student-name').focus(), 100);
+        }
+
+        function closeAddStudentModal() {
+            document.getElementById('add-student-modal').classList.add('hidden');
+        }
+
+        function confirmAddStudent(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('new-student-name').value.trim();
+            if (!nameInput) return;
+
+            appState.students.push({
+                id: 'std_' + Date.now(),
+                name: nameInput,
+                paid: false,
+                amount: appState.defaultNominal,
+                paidAt: null,
+                paidTimestamp: null,
+                note: ''
+            });
+
+            saveState();
+            renderAll();
+            closeAddStudentModal();
+            showToast(`${nameInput} ditambahkan ke daftar kelas`);
+        }
+
+        // Manajemen Pengeluaran Kas
+        function addExpense(e) {
+            e.preventDefault();
+            const desc = document.getElementById('expense-desc').value.trim();
+            const amount = parseInt(document.getElementById('expense-amount').value, 10);
+
+            if (!desc || isNaN(amount) || amount <= 0) return;
+
+            const now = new Date();
+            const expId = 'exp_' + Date.now();
+            appState.expenses.unshift({
+                id: expId,
+                timestamp: now.toISOString(),
+                date: now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+                desc: desc,
+                amount: amount
+            });
+
+            appState.historyLogs.unshift({
+                id: 'log_' + expId,
+                expenseId: expId,
+                type: 'expense',
+                title: desc,
+                note: 'Pengeluaran Kas',
+                amount: amount,
+                timestamp: now.toISOString()
+            });
+
+            document.getElementById('expense-desc').value = '';
+            document.getElementById('expense-amount').value = '';
+
+            saveState();
+            renderAll();
+            showToast('Catatan pengeluaran berhasil disimpan');
+        }
+
+        function deleteExpense(id) {
+            appState.expenses = appState.expenses.filter(e => e.id !== id);
+            appState.historyLogs = appState.historyLogs.filter(l => l.expenseId !== id);
+            saveState();
+            renderAll();
+            showToast('Catatan pengeluaran dihapus', 'warning');
+        }
+
+        function renderExpenses() {
+            const tbody = document.getElementById('expense-table-body');
+            const emptyEl = document.getElementById('expense-empty');
+            const totalBadge = document.getElementById('expense-total-badge');
+
+            const totalKeluar = appState.expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+            totalBadge.textContent = `Total: ${formatRupiah(totalKeluar)}`;
+
+            tbody.innerHTML = '';
+
+            if (appState.expenses.length === 0) {
+                emptyEl.classList.remove('hidden');
+                return;
+            } else {
+                emptyEl.classList.add('hidden');
+            }
+
+            appState.expenses.forEach(exp => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">${exp.date}</td>
+                    <td class="py-3 px-4 font-medium text-slate-800">${exp.desc}</td>
+                    <td class="py-3 px-4 text-right font-semibold text-rose-600 whitespace-nowrap">- ${formatRupiah(exp.amount)}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="deleteExpense('${exp.id}')" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer" title="Hapus">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // Modal Reset Periode
+        function openResetModal() {
+            document.getElementById('reset-modal').classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('reset-modal').classList.add('hidden');
+        }
+
+        function confirmReset() {
+            appState.students.forEach(s => {
+                s.paid = false;
+                s.paidAt = null;
+                s.paidTimestamp = null;
+            });
+            saveState();
+            renderAll();
+            closeResetModal();
+            showToast('Status pembayaran berhasil di-reset (Riwayat rekapan tetap tersimpan)');
+        }
+
+        // ==========================================
+        // FITUR REKAPAN (JAM, HARI, BULAN, TAHUN) & SETOR WA
+        // ==========================================
+
+        function saveWaliKelasPhone() {
+            appState.waliKelasPhone = document.getElementById('wa-wali-kelas').value.trim();
+            saveState();
+            showToast('Nomor WhatsApp Wali Kelas disimpan');
+        }
+
+        function setRecapPeriod(period) {
+            currentRecapPeriod = period;
+            const periods = ['auto_all', 'hour', 'day', 'month', 'year'];
+            periods.forEach(p => {
+                const btn = document.getElementById(`recap-btn-${p}`);
+                if (!btn) return;
+                if (p === period) {
+                    btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-white text-indigo-600 shadow-sm transition-all cursor-pointer';
+                } else {
+                    btn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all cursor-pointer';
+                }
+            });
+
+            const datePicker = document.getElementById('recap-date-picker');
+            const monthPicker = document.getElementById('recap-month-picker');
+            const yearPicker = document.getElementById('recap-year-picker');
+
+            datePicker.classList.add('hidden');
+            monthPicker.classList.add('hidden');
+            yearPicker.classList.add('hidden');
+
+            if (period === 'auto_all' || period === 'hour' || period === 'day') {
+                datePicker.classList.remove('hidden');
+            } else if (period === 'month') {
+                monthPicker.classList.remove('hidden');
+            } else if (period === 'year') {
+                yearPicker.classList.remove('hidden');
+            }
+
+            renderRecap();
+        }
+
+        function getAllSynchronizedLogs() {
+            let logs = [...(appState.historyLogs || [])];
+            
+            appState.students.forEach(s => {
+                if (s.paid) {
+                    const exists = logs.some(l => l.studentId === s.id && l.type === 'income');
+                    if (!exists) {
+                        logs.push({
+                            id: 'sync_' + s.id,
+                            studentId: s.id,
+                            type: 'income',
+                            title: s.name,
+                            note: s.note || appState.title,
+                            amount: Number(s.amount || 0),
+                            timestamp: s.paidTimestamp || new Date().toISOString()
+                        });
+                    }
+                }
+            });
+            return logs;
+        }
+
+        function computeAutomaticTimeSummaries(allLogs) {
+            const now = new Date();
+            const curYear = now.getFullYear();
+            const curMonth = now.getMonth();
+            const curDate = now.getDate();
+            const curHour = now.getHours();
+
+            const summary = {
+                hour: { in: 0, out: 0, countIn: 0, label: `${String(curHour).padStart(2, '0')}:00 - ${String(curHour).padStart(2, '0')}:59` },
+                day: { in: 0, out: 0, countIn: 0, label: now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) },
+                month: { in: 0, out: 0, countIn: 0, label: now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) },
+                year: { in: 0, out: 0, countIn: 0, label: `Tahun ${curYear}` },
+                hourlyBreakdown: {} // Kelompok per jam untuk hari ini
+            };
+
+            allLogs.forEach(item => {
+                const d = new Date(item.timestamp);
+                const amt = Number(item.amount || 0);
+                const isSameYear = d.getFullYear() === curYear;
+                const isSameMonth = isSameYear && d.getMonth() === curMonth;
+                const isSameDay = isSameMonth && d.getDate() === curDate;
+                const isSameHour = isSameDay && d.getHours() === curHour;
+
+                if (isSameYear) {
+                    if (item.type === 'income') { summary.year.in += amt; summary.year.countIn++; }
+                    else { summary.year.out += amt; }
+                }
+                if (isSameMonth) {
+                    if (item.type === 'income') { summary.month.in += amt; summary.month.countIn++; }
+                    else { summary.month.out += amt; }
+                }
+                if (isSameDay) {
+                    if (item.type === 'income') { summary.day.in += amt; summary.day.countIn++; }
+                    else { summary.day.out += amt; }
+
+                    const hrSlot = `Jam ${String(d.getHours()).padStart(2, '0')}:00`;
+                    if (!summary.hourlyBreakdown[hrSlot]) {
+                        summary.hourlyBreakdown[hrSlot] = { in: 0, out: 0, names: [] };
+                    }
+                    if (item.type === 'income') {
+                        summary.hourlyBreakdown[hrSlot].in += amt;
+                        summary.hourlyBreakdown[hrSlot].names.push(item.title);
+                    } else {
+                        summary.hourlyBreakdown[hrSlot].out += amt;
+                    }
+                }
+                if (isSameHour) {
+                    if (item.type === 'income') { summary.hour.in += amt; summary.hour.countIn++; }
+                    else { summary.hour.out += amt; }
+                }
+            });
+
+            return summary;
+        }
+
+        function getFilteredRecapLogs() {
+            const logs = getAllSynchronizedLogs();
+
+            const selectedDate = document.getElementById('recap-date-picker').value;
+            const selectedMonth = document.getElementById('recap-month-picker').value;
+            const selectedYear = document.getElementById('recap-year-picker').value;
+
+            let periodLabel = 'Otomatis Lengkap (Jam, Tanggal, Bulan & Tahun)';
+
+            const filtered = logs.filter(item => {
+                const d = new Date(item.timestamp);
+                const yyyy = d.getFullYear().toString();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const itemDate = `${yyyy}-${mm}-${dd}`;
+                const itemMonth = `${yyyy}-${mm}`;
+
+                if (currentRecapPeriod === 'auto_all' || currentRecapPeriod === 'hour' || currentRecapPeriod === 'day') {
+                    return itemDate === selectedDate;
+                } else if (currentRecapPeriod === 'month') {
+                    return itemMonth === selectedMonth;
+                } else if (currentRecapPeriod === 'year') {
+                    return yyyy === selectedYear;
+                }
+                return true;
+            });
+
+            filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            if (currentRecapPeriod === 'auto_all') {
+                const formattedDate = selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '';
+                periodLabel = `Otomatis Lengkap • ${formattedDate}`;
+            } else if (currentRecapPeriod === 'hour') {
+                const formattedDate = selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '';
+                periodLabel = `Rincian Per Jam (${formattedDate})`;
+            } else if (currentRecapPeriod === 'day') {
+                const formattedDate = selectedDate ? new Date(selectedDate + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '';
+                periodLabel = `Tanggal: ${formattedDate}`;
+            } else if (currentRecapPeriod === 'month') {
+                const [y, m] = selectedMonth.split('-');
+                const formattedMonth = new Date(y, parseInt(m) - 1, 1).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+                periodLabel = `Bulan: ${formattedMonth}`;
+            } else if (currentRecapPeriod === 'year') {
+                periodLabel = `Tahun: ${selectedYear}`;
+            }
+
+            return { filtered, periodLabel, allLogs: logs };
+        }
+
+        function renderRecap() {
+            const { filtered, periodLabel, allLogs } = getFilteredRecapLogs();
+            const autoSummary = computeAutomaticTimeSummaries(allLogs);
+
+            // Update 4 Kartu Otomatis (Jam, Tanggal/Hari, Bulan, Tahun)
+            document.getElementById('auto-label-hour').textContent = autoSummary.hour.label;
+            document.getElementById('auto-net-hour').textContent = formatRupiah(autoSummary.hour.in - autoSummary.hour.out);
+            document.getElementById('auto-in-hour').textContent = formatRupiah(autoSummary.hour.in);
+            document.getElementById('auto-out-hour').textContent = formatRupiah(autoSummary.hour.out);
+
+            document.getElementById('auto-label-day').textContent = autoSummary.day.label;
+            document.getElementById('auto-net-day').textContent = formatRupiah(autoSummary.day.in - autoSummary.day.out);
+            document.getElementById('auto-in-day').textContent = formatRupiah(autoSummary.day.in);
+            document.getElementById('auto-out-day').textContent = formatRupiah(autoSummary.day.out);
+
+            document.getElementById('auto-label-month').textContent = autoSummary.month.label;
+            document.getElementById('auto-net-month').textContent = formatRupiah(autoSummary.month.in - autoSummary.month.out);
+            document.getElementById('auto-in-month').textContent = formatRupiah(autoSummary.month.in);
+            document.getElementById('auto-out-month').textContent = formatRupiah(autoSummary.month.out);
+
+            document.getElementById('auto-label-year').textContent = autoSummary.year.label;
+            document.getElementById('auto-net-year').textContent = formatRupiah(autoSummary.year.in - autoSummary.year.out);
+            document.getElementById('auto-in-year').textContent = formatRupiah(autoSummary.year.in);
+            document.getElementById('auto-out-year').textContent = formatRupiah(autoSummary.year.out);
+
+            document.getElementById('recap-period-label').textContent = `Menampilkan: ${periodLabel}`;
+
+            const incomeLogs = filtered.filter(l => l.type === 'income');
+            const expenseLogs = filtered.filter(l => l.type === 'expense');
+
+            const totalMasuk = incomeLogs.reduce((sum, l) => sum + Number(l.amount || 0), 0);
+            const totalKeluar = expenseLogs.reduce((sum, l) => sum + Number(l.amount || 0), 0);
+            const saldoBersih = totalMasuk - totalKeluar;
+
+            document.getElementById('recap-masuk').textContent = formatRupiah(totalMasuk);
+            document.getElementById('recap-masuk-count').textContent = `${incomeLogs.length} siswa membayar`;
+            document.getElementById('recap-keluar').textContent = formatRupiah(totalKeluar);
+            document.getElementById('recap-keluar-count').textContent = `${expenseLogs.length} catatan keluar`;
+            document.getElementById('recap-bersih').textContent = formatRupiah(saldoBersih);
+
+            const tbody = document.getElementById('recap-table-body');
+            const emptyEl = document.getElementById('recap-empty');
+            tbody.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyEl.classList.remove('hidden');
+            } else {
+                emptyEl.classList.add('hidden');
+                filtered.forEach(item => {
+                    const d = new Date(item.timestamp);
+                    const jamStr = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    const tglStr = d.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'long', year: 'numeric' });
+
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-slate-50';
+                    tr.innerHTML = `
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="font-bold text-indigo-700 text-xs bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md">Jam ${jamStr}</span>
+                            <span class="text-xs font-medium text-slate-600 ml-1.5">${tglStr}</span>
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            ${item.type === 'income' 
+                                ? '<span class="px-2 py-0.5 text-xs font-semibold bg-emerald-100 text-emerald-700 rounded-full">Kas Masuk</span>'
+                                : '<span class="px-2 py-0.5 text-xs font-semibold bg-rose-100 text-rose-700 rounded-full">Pengeluaran</span>'
+                            }
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="font-semibold text-slate-800">${item.title}</div>
+                            ${item.note ? `<div class="text-xs text-slate-400">${item.note}</div>` : ''}
+                        </td>
+                        <td class="py-3 px-4 text-right font-bold whitespace-nowrap ${item.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}">
+                            ${item.type === 'income' ? '+' : '-'} ${formatRupiah(item.amount)}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            document.getElementById('wa-preview-box').textContent = generateWhatsAppMessage(filtered, periodLabel, totalMasuk, totalKeluar, saldoBersih, autoSummary);
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        function generateWhatsAppMessage(filteredLogs, periodLabel, totalMasuk, totalKeluar, saldoBersih, autoSummary) {
+            const totalAllStudents = appState.students.length;
+            const paidStudents = appState.students.filter(s => s.paid);
+            const unpaidStudents = appState.students.filter(s => !s.paid);
+
+            const allTimeMasuk = paidStudents.reduce((sum, s) => sum + Number(s.amount || 0), 0);
+            const allTimeKeluar = appState.expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+            const allTimeSaldo = allTimeMasuk - allTimeKeluar;
+
+            const now = new Date();
+            const waktuSetor = now.toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }) +
+                               ' • Jam ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+
+            let msg = `*LAPORAN REKAPAN UANG KAS KELAS X TKJ ONE*\n`;
+            msg += `🏫 *Sekolah:* SMK Pasundan\n`;
+            msg += `📌 *Keterangan:* ${appState.title}\n`;
+            msg += `🕒 *Waktu Setor:* ${waktuSetor}\n`;
+            msg += `-----------------------------------\n`;
+
+            if (autoSummary) {
+                msg += `📊 *REKAPAN OTOMATIS (JAM / HARI / BULAN / TAHUN):*\n`;
+                msg += `• *Jam Ini (${autoSummary.hour.label}):* Masuk ${formatRupiah(autoSummary.hour.in)} | Keluar ${formatRupiah(autoSummary.hour.out)}\n`;
+                msg += `• *Hari Ini (${autoSummary.day.label}):* Masuk ${formatRupiah(autoSummary.day.in)} | Keluar ${formatRupiah(autoSummary.day.out)}\n`;
+                msg += `• *Bulan Ini (${autoSummary.month.label}):* Masuk ${formatRupiah(autoSummary.month.in)} | Keluar ${formatRupiah(autoSummary.month.out)}\n`;
+                msg += `• *${autoSummary.year.label}:* Masuk ${formatRupiah(autoSummary.year.in)} | Keluar ${formatRupiah(autoSummary.year.out)}\n`;
+                msg += `-----------------------------------\n`;
+
+                const hourKeys = Object.keys(autoSummary.hourlyBreakdown).sort();
+                if (hourKeys.length > 0) {
+                    msg += `⏱️ *Rincian Per Jam Hari Ini:*\n`;
+                    hourKeys.forEach(hr => {
+                        const slot = autoSummary.hourlyBreakdown[hr];
+                        const namaList = slot.names.length > 0 ? ` (${slot.names.join(', ')})` : '';
+                        msg += `• ${hr}: +${formatRupiah(slot.in)}${slot.out > 0 ? ` / -${formatRupiah(slot.out)}` : ''}${namaList}\n`;
+                    });
+                    msg += `-----------------------------------\n`;
+                }
+            }
+
+            msg += `🏦 *TOTAL SALDO KAS KELAS SAAT INI:*\n`;
+            msg += `• Total Uang Masuk: ${formatRupiah(allTimeMasuk)} (${paidStudents.length}/${totalAllStudents} Siswa)\n`;
+            msg += `• Total Pengeluaran: ${formatRupiah(allTimeKeluar)}\n`;
+            msg += `• *SISA SALDO BERSIH: ${formatRupiah(allTimeSaldo)}*\n`;
+            msg += `-----------------------------------\n`;
+
+            const incomeLogs = filteredLogs.filter(l => l.type === 'income');
+            if (incomeLogs.length > 0) {
+                msg += `✅ *Detail Pembayaran (${periodLabel}):*\n`;
+                incomeLogs.forEach((l, i) => {
+                    const d = new Date(l.timestamp);
+                    const jam = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                    const tgl = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                    msg += `${i + 1}. ${l.title} — ${formatRupiah(l.amount)} (${tgl}, Jam ${jam})\n`;
+                });
+                msg += `\n`;
+            }
+
+            const expenseLogs = filteredLogs.filter(l => l.type === 'expense');
+            if (expenseLogs.length > 0) {
+                msg += `💸 *Detail Pengeluaran (${expenseLogs.length}):*\n`;
+                expenseLogs.forEach((l, i) => {
+                    const d = new Date(l.timestamp);
+                    const tgl = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                    msg += `${i + 1}. ${l.title}: ${formatRupiah(l.amount)} (${tgl})\n`;
+                });
+                msg += `\n`;
+            }
+
+            if (unpaidStudents.length > 0) {
+                msg += `⏳ *Daftar Belum Bayar (${unpaidStudents.length} Siswa):*\n`;
+                msg += unpaidStudents.map(s => s.name).join(', ') + `\n\n`;
+            } else {
+                msg += `🎉 *Alhamdulillah, seluruh siswa (${totalAllStudents}) sudah lunas!*\n\n`;
+            }
+
+            msg += `_Laporan otomatis oleh Bendahara Kelas X TKJ ONE_`;
+            return msg;
+        }
+
+        function sendReportToWhatsApp() {
+            const rawPhone = document.getElementById('wa-wali-kelas').value.trim();
+            if (!rawPhone) {
+                showToast('Masukkan nomor WhatsApp Wali Kelas terlebih dahulu!', 'warning');
+                document.getElementById('wa-wali-kelas').focus();
+                return;
+            }
+
+            let cleanPhone = rawPhone.replace(/[^0-9]/g, '');
+            if (cleanPhone.startsWith('0')) {
+                cleanPhone = '62' + cleanPhone.substring(1);
+            }
+
+            const { filtered, periodLabel, allLogs } = getFilteredRecapLogs();
+            const autoSummary = computeAutomaticTimeSummaries(allLogs);
+            const totalMasuk = filtered.filter(l => l.type === 'income').reduce((s, l) => s + Number(l.amount || 0), 0);
+            const totalKeluar = filtered.filter(l => l.type === 'expense').reduce((s, l) => s + Number(l.amount || 0), 0);
+            const text = generateWhatsAppMessage(filtered, periodLabel, totalMasuk, totalKeluar, totalMasuk - totalKeluar, autoSummary);
+
+            const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+            window.open(waUrl, '_blank');
+            showToast('Membuka WhatsApp untuk setor laporan otomatis...');
+        }
+
+        function copyRecapText() {
+            const text = document.getElementById('wa-preview-box').textContent;
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = text;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+            showToast('Teks rekapan berhasil disalin ke clipboard!');
+        }
+
+        // Ekspor Lengkap ke Microsoft Excel (.xlsx) dengan Multi-Sheet & Rumus Rekapan Otomatis
+        function exportToExcel() {
+            if (typeof XLSX === 'undefined') {
+                showToast('Library Excel sedang dimuat, silakan coba beberapa detik lagi.', 'warning');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+            const nowStr = new Date().toLocaleString('id-ID', {
+                day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+
+            const totalStudents = appState.students.length;
+            const lastStudentRow = 4 + totalStudents;
+            const lastExpenseRow = 4 + Math.max(appState.expenses.length, 1);
+
+            const recapSheetData = [
+                ['LAPORAN REKAPAN UANG KAS KELAS X TKJ ONE - SMK PASUNDAN'],
+                ['Judul / Periode Kas', appState.title],
+                ['Tanggal Ekspor Laporan', nowStr],
+                [],
+                ['A. RINGKASAN KEUANGAN KELAS (OTOMATIS RUMUS EXCEL)', 'KETERANGAN / NILAI'],
+                ['Total Jumlah Siswa/Siswi', { f: `COUNTA('Daftar Siswa'!B5:B${lastStudentRow})` }],
+                ['Jumlah Siswa Sudah Bayar (Lunas)', { f: `COUNTIF('Daftar Siswa'!D5:D${lastStudentRow}, "LUNAS")` }],
+                ['Jumlah Siswa Belum Bayar', { f: `COUNTIF('Daftar Siswa'!D5:D${lastStudentRow}, "BELUM BAYAR")` }],
+                ['Total Uang Kas Masuk (Rp)', { f: `SUMIF('Daftar Siswa'!D5:D${lastStudentRow}, "LUNAS", 'Daftar Siswa'!C5:C${lastStudentRow})` }],
+                ['Total Pengeluaran Kas (Rp)', appState.expenses.length > 0 ? { f: `SUM('Pengeluaran Kas'!D5:D${lastExpenseRow})` } : 0],
+                ['SISA SALDO BERSIH KAS (Rp)', { f: 'B9-B10' }],
+                ['Potensi Uang Kas Belum Tertagih (Rp)', { f: `SUMIF('Daftar Siswa'!D5:D${lastStudentRow}, "BELUM BAYAR", 'Daftar Siswa'!C5:C${lastStudentRow})` }],
+                [],
+                ['B. REKAPAN TRANSAKSI PER HARI, BULAN, & TAHUN'],
+                ['Periode Waktu', 'Kategori Waktu', 'Total Kas Masuk (Rp)', 'Total Pengeluaran (Rp)', 'Selisih Bersih (Rp)']
+            ];
+
+            let allLogs = [...(appState.historyLogs || [])];
+            appState.students.forEach(s => {
+                if (s.paid && !allLogs.some(l => l.studentId === s.id && l.type === 'income')) {
+                    allLogs.push({
+                        type: 'income',
+                        title: s.name,
+                        note: s.note || appState.title,
+                        amount: Number(s.amount || 0),
+                        timestamp: s.paidTimestamp || new Date().toISOString()
+                    });
+                }
+            });
+
+            const dailyMap = {};
+            const monthlyMap = {};
+            const yearlyMap = {};
+
+            allLogs.forEach(log => {
+                const d = new Date(log.timestamp);
+                const dayKey = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+                const monthKey = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+                const yearKey = `Tahun ${d.getFullYear()}`;
+
+                if (!dailyMap[dayKey]) dailyMap[dayKey] = { in: 0, out: 0 };
+                if (!monthlyMap[monthKey]) monthlyMap[monthKey] = { in: 0, out: 0 };
+                if (!yearlyMap[yearKey]) yearlyMap[yearKey] = { in: 0, out: 0 };
+
+                if (log.type === 'income') {
+                    dailyMap[dayKey].in += Number(log.amount || 0);
+                    monthlyMap[monthKey].in += Number(log.amount || 0);
+                    yearlyMap[yearKey].in += Number(log.amount || 0);
+                } else {
+                    dailyMap[dayKey].out += Number(log.amount || 0);
+                    monthlyMap[monthKey].out += Number(log.amount || 0);
+                    yearlyMap[yearKey].out += Number(log.amount || 0);
+                }
+            });
+
+            let currentRecapRow = recapSheetData.length + 1;
+            const addGroupRows = (mapObj, categoryLabel) => {
+                const keys = Object.keys(mapObj);
+                if (keys.length === 0) {
+                    recapSheetData.push(['Belum ada transaksi', categoryLabel, 0, 0, { f: `C${currentRecapRow}-D${currentRecapRow}` }]);
+                    currentRecapRow++;
+                } else {
+                    keys.forEach(k => {
+                        recapSheetData.push([k, categoryLabel, mapObj[k].in, mapObj[k].out, { f: `C${currentRecapRow}-D${currentRecapRow}` }]);
+                        currentRecapRow++;
+                    });
+                }
+            };
+
+            addGroupRows(dailyMap, 'Rekapan Harian');
+            addGroupRows(monthlyMap, 'Rekapan Bulanan');
+            addGroupRows(yearlyMap, 'Rekapan Tahunan');
+
+            const wsRecap = XLSX.utils.aoa_to_sheet(recapSheetData);
+            wsRecap['!cols'] = [{ wch: 38 }, { wch: 24 }, { wch: 22 }, { wch: 22 }, { wch: 22 }];
+            XLSX.utils.book_append_sheet(wb, wsRecap, 'Rekapan Kas');
+
+            const studentSheetData = [
+                ['DAFTAR PEMBAYARAN UANG KAS SISWA/SISWI X TKJ ONE'],
+                [`Periode: ${appState.title} | Diekspor: ${nowStr}`],
+                [],
+                ['No', 'Nama Siswa / Siswi', 'Nominal (Rp)', 'Status Pembayaran', 'Waktu Bayar (Tanggal & Jam)', 'Catatan']
+            ];
+
+            appState.students.forEach((s, idx) => {
+                studentSheetData.push([
+                    idx + 1,
+                    s.name,
+                    Number(s.amount || 0),
+                    s.paid ? 'LUNAS' : 'BELUM BAYAR',
+                    s.paidAt || '-',
+                    s.note || '-'
+                ]);
+            });
+
+            studentSheetData.push([]);
+            studentSheetData.push([
+                '',
+                'TOTAL UANG KAS MASUK (LUNAS)',
+                { f: `SUMIF(D5:D${lastStudentRow}, "LUNAS", C5:C${lastStudentRow})` },
+                { f: `COUNTIF(D5:D${lastStudentRow}, "LUNAS") & " / " & COUNTA(B5:B${lastStudentRow}) & " Siswa"` },
+                '',
+                ''
+            ]);
+
+            const wsStudents = XLSX.utils.aoa_to_sheet(studentSheetData);
+            wsStudents['!cols'] = [{ wch: 6 }, { wch: 30 }, { wch: 18 }, { wch: 20 }, { wch: 26 }, { wch: 25 }];
+            XLSX.utils.book_append_sheet(wb, wsStudents, 'Daftar Siswa');
+
+            const expenseSheetData = [
+                ['CATATAN PENGELUARAN UANG KAS KELAS X TKJ ONE'],
+                [`Periode: ${appState.title}`],
+                [],
+                ['No', 'Tanggal', 'Keperluan / Keterangan', 'Nominal Pengeluaran (Rp)']
+            ];
+
+            if (appState.expenses.length === 0) {
+                expenseSheetData.push([1, '-', 'Belum ada pengeluaran kas', 0]);
+            } else {
+                appState.expenses.forEach((exp, idx) => {
+                    expenseSheetData.push([idx + 1, exp.date, exp.desc, Number(exp.amount || 0)]);
+                });
+            }
+
+            expenseSheetData.push([]);
+            expenseSheetData.push(['', '', 'TOTAL PENGELUARAN KAS', { f: `SUM(D5:D${lastExpenseRow})` }]);
+
+            const wsExpenses = XLSX.utils.aoa_to_sheet(expenseSheetData);
+            wsExpenses['!cols'] = [{ wch: 6 }, { wch: 18 }, { wch: 40 }, { wch: 24 }];
+            XLSX.utils.book_append_sheet(wb, wsExpenses, 'Pengeluaran Kas');
+
+            const logSheetData = [
+                ['LOG RINCIAN TRANSAKSI PER JAM, HARI, BULAN, & TAHUN'],
+                [`Periode: ${appState.title}`],
+                [],
+                ['No', 'Jam', 'Tanggal', 'Bulan & Tahun', 'Jenis Transaksi', 'Nama / Keterangan', 'Nominal (Rp)']
+            ];
+
+            const sortedLogs = [...allLogs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            if (sortedLogs.length === 0) {
+                logSheetData.push([1, '-', '-', '-', '-', 'Belum ada riwayat transaksi', 0]);
+            } else {
+                sortedLogs.forEach((log, idx) => {
+                    const d = new Date(log.timestamp);
+                    logSheetData.push([
+                        idx + 1,
+                        d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                        d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+                        d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }),
+                        log.type === 'income' ? 'Kas Masuk' : 'Pengeluaran',
+                        log.title,
+                        log.type === 'income' ? Number(log.amount || 0) : -Number(log.amount || 0)
+                    ]);
+                });
+            }
+
+            const wsLogs = XLSX.utils.aoa_to_sheet(logSheetData);
+            wsLogs['!cols'] = [{ wch: 6 }, { wch: 14 }, { wch: 18 }, { wch: 20 }, { wch: 18 }, { wch: 32 }, { wch: 18 }];
+            XLSX.utils.book_append_sheet(wb, wsLogs, 'Log Per Jam');
+
+            const fileName = `Laporan_Kas_XTKJONE_${appState.title.replace(/\s+/g, '_')}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+
+            showToast('File Microsoft Excel (.xlsx) dengan rekapan berhasil diunduh!');
+        }
+
+        // Jalankan saat halaman selesai dimuat
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
